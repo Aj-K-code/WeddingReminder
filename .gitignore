@@ -8,3 +8,5 @@ _to_delete/
 PXL_*
 _tmp_sync2/
 *.tar.gz
+_tmp_sync/
+HANDOFF.md
