@@ -1,0 +1,6 @@
+site/
+qr-codes/
+node_modules/
+__pycache__/
+.DS_Store
+_to_delete/

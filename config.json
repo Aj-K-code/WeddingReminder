@@ -1,0 +1,20 @@
+{
+  "couple": "Ajith & Biyona",
+  "couple_short": "Ajith & Biyona",
+  "initials": "A·B",
+  "wedding_date": "August 15, 2026",
+  "date_short": "08 · 15 · 2026",
+  "date_iso": "2026-08-15",
+  "ics_summary": "Ajith & Biyona's Wedding",
+  "site_url": "https://aj-k-code.github.io/WeddingReminder",
+  "default_photo": "",
+  "default_photo_caption": "",
+  "gallery": [
+    { "file": "chicago.jpg", "caption": "Foggy day, favorite city" },
+    { "file": "fountain.jpg", "caption": "Finding fountains everywhere we go" },
+    { "file": "shesaidyes.jpg", "caption": "She said yes" },
+    { "file": "timessquare.jpg", "caption": "A New York minute" },
+    { "file": "sunset.jpg", "caption": "Golden hour on the river" },
+    { "file": "flower.jpg", "caption": "Sunday best, big smiles" }
+  ]
+}
