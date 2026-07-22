@@ -10,8 +10,10 @@
   "default_photo": "",
   "default_photo_caption": "",
   "gallery": [
-    { "file": "chicago.jpg", "caption": "Foggy day, favorite city" },
     { "file": "fountain.jpg", "caption": "Finding fountains everywhere we go" },
+    { "file": "sunroom.jpg", "caption": "A quiet afternoon in the sun" },
+    { "file": "snowday.jpg", "caption": "All dressed up on a snow day" },
+    { "file": "chicago.jpg", "caption": "Foggy day, favorite city" },
     { "file": "shesaidyes.jpg", "caption": "She said yes" },
     { "file": "timessquare.jpg", "caption": "A New York minute" },
     { "file": "sunset.jpg", "caption": "Golden hour on the river" },

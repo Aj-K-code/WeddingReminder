@@ -40,7 +40,7 @@ def paragraphs(text: str, greeting: str) -> str:
 
 # ---------------------------------------------------------------- photos
 
-def process_photo(src: Path, dest_dir: Path, max_w: int = 1100):
+def process_photo(src: Path, dest_dir: Path, max_w: int = 1000):
     """Resize + recompress a photo. Returns (filename, width, height) or None."""
     try:
         from PIL import Image, ImageOps
@@ -56,7 +56,7 @@ def process_photo(src: Path, dest_dir: Path, max_w: int = 1100):
     if im.width > max_w:
         im = im.resize((max_w, round(im.height * max_w / im.width)), Image.LANCZOS)
     out = dest_dir / (src.stem + ".jpg")
-    im.save(out, "JPEG", quality=78, optimize=True, progressive=True)
+    im.save(out, "JPEG", quality=74, optimize=True, progressive=True)
     return (out.name, im.width, im.height)
 
 # ---------------------------------------------------------------- build

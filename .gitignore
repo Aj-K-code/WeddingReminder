@@ -2,5 +2,9 @@ site/
 qr-codes/
 node_modules/
 __pycache__/
-.DS_Store
 _to_delete/
+.DS_Store
+*.xlsx
+PXL_*
+_tmp_sync2/
+*.tar.gz
