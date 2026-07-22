@@ -16,6 +16,7 @@ so you never have to invent slugs yourself.
 
 import csv, html, io, json, re, secrets, shutil, sys, unicodedata
 from pathlib import Path
+from urllib.parse import quote
 
 ROOT = Path(__file__).parent
 SITE = ROOT / "site"
@@ -118,19 +119,77 @@ def main():
     ics_summary = cfg.get("ics_summary") or f"{cfg['couple']}'s Wedding"
     ics_name = re.sub(r"[^A-Za-z0-9]+", "-", ics_summary).strip("-") + ".ics"
     date_iso = cfg.get("date_iso") or ""
+    venue_name = cfg.get("venue_name") or ""
+    venue_address = cfg.get("venue_address") or ""
+    ics_location = ", ".join(p for p in (venue_name, venue_address) if p)
     if date_iso:
-        from datetime import date, timedelta
+        from datetime import date, datetime, timedelta
         d0 = date.fromisoformat(date_iso)
         d1 = d0 + timedelta(days=1)
+
+        def ics_esc(s):
+            return s.replace("\\", "\\\\").replace(",", "\\,").replace(";", "\\;")
+
+        loc_line = f"LOCATION:{ics_esc(ics_location)}\r\n" if ics_location else ""
+        start_t = cfg.get("ics_start_time") or ""
+        tzid = cfg.get("ics_tzid") or "America/Chicago"
+
+        if start_t:
+            # timed event in the venue's local timezone (shows the same clock time everywhere)
+            sh, sm = (int(x) for x in start_t.split(":")[:2])
+            end_t = cfg.get("ics_end_time") or ""
+            if end_t:
+                eh, em = (int(x) for x in end_t.split(":")[:2])
+                dt_end = datetime(d0.year, d0.month, d0.day, eh, em)
+            else:
+                dt_end = datetime(d0.year, d0.month, d0.day, sh, sm) + timedelta(hours=1, minutes=30)
+            dt_start = datetime(d0.year, d0.month, d0.day, sh, sm)
+            when = (
+                f"DTSTART;TZID={tzid}:{dt_start.strftime('%Y%m%dT%H%M%S')}\r\n"
+                f"DTEND;TZID={tzid}:{dt_end.strftime('%Y%m%dT%H%M%S')}\r\n"
+            )
+            # US-rules VTIMEZONE — correct for America/Chicago and other US zones
+            vtimezone = (
+                "BEGIN:VTIMEZONE\r\n"
+                f"TZID:{tzid}\r\n"
+                "BEGIN:DAYLIGHT\r\nTZOFFSETFROM:-0600\r\nTZOFFSETTO:-0500\r\nTZNAME:CDT\r\n"
+                "DTSTART:19700308T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=2SU\r\nEND:DAYLIGHT\r\n"
+                "BEGIN:STANDARD\r\nTZOFFSETFROM:-0500\r\nTZOFFSETTO:-0600\r\nTZNAME:CST\r\n"
+                "DTSTART:19701101T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU\r\nEND:STANDARD\r\n"
+                "END:VTIMEZONE\r\n"
+            )
+        else:
+            when = (
+                f"DTSTART;VALUE=DATE:{d0.strftime('%Y%m%d')}\r\n"
+                f"DTEND;VALUE=DATE:{d1.strftime('%Y%m%d')}\r\n"
+            )
+            vtimezone = ""
+
         (SITE / "wedding.ics").write_text(
             "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//wedding-thanks//EN\r\n"
+            "CALSCALE:GREGORIAN\r\n"
+            + vtimezone +
             "BEGIN:VEVENT\r\n"
             f"UID:wedding-{d0.strftime('%Y%m%d')}@thanks\r\n"
             f"DTSTAMP:{d0.strftime('%Y%m%d')}T000000Z\r\n"
-            f"DTSTART;VALUE=DATE:{d0.strftime('%Y%m%d')}\r\n"
-            f"DTEND;VALUE=DATE:{d1.strftime('%Y%m%d')}\r\n"
-            f"SUMMARY:{ics_summary}\r\n"
+            + when +
+            f"SUMMARY:{ics_esc(ics_summary)}\r\n"
+            + loc_line +
             "END:VEVENT\r\nEND:VCALENDAR\r\n", encoding="utf-8")
+
+    # venue block for the save-the-date card (shared across pages)
+    ceremony_time = cfg.get("ceremony_time") or ""
+    venue_bits = []
+    if ceremony_time:
+        venue_bits.append(f'      <p class="venue-time">{esc(ceremony_time)}</p>')
+    if venue_name:
+        venue_bits.append(f'      <p class="venue-name">{esc(venue_name)}</p>')
+    if venue_address:
+        maps_url = "https://maps.google.com/?q=" + quote(ics_location or venue_address)
+        venue_bits.append(
+            f'      <a class="venue-addr" href="{maps_url}" target="_blank" rel="noopener">'
+            f'{esc(venue_address)}</a>')
+    venue_html = ('    <div class="venue">\n' + "\n".join(venue_bits) + "\n    </div>\n") if venue_bits else ""
 
     for row in rows:
         slug = row["slug"]
@@ -189,6 +248,7 @@ def main():
             .replace("{{GREETING}}", esc(greeting))
             .replace("{{MESSAGE_HTML}}", paragraphs(message, esc(greeting)))
             .replace("{{NOTE_HTML}}", note_html)
+            .replace("{{VENUE_HTML}}", venue_html)
             .replace("{{GALLERY_HTML}}", photo_html)
             .replace("{{DATE_ISO}}", cfg.get("date_iso") or "")
             .replace("{{ICS_NAME}}", ics_name)
@@ -237,6 +297,7 @@ def main():
         .replace("{{GREETING}}", "friends and family")
         .replace("{{MESSAGE_HTML}}", paragraphs(message, "friends and family"))
         .replace("{{NOTE_HTML}}", "")
+        .replace("{{VENUE_HTML}}", venue_html)
         .replace("{{GALLERY_HTML}}", "")
         .replace("{{DATE_ISO}}", cfg.get("date_iso") or "")
         .replace("{{ICS_NAME}}", ics_name)
