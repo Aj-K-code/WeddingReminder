@@ -39,6 +39,23 @@ def paragraphs(text: str, greeting: str) -> str:
     paras = [p.strip() for p in re.split(r"\n\s*\n", text.strip()) if p.strip()]
     return "\n".join(f"      <p>{esc(p)}</p>" for p in paras)
 
+def salutation_for(row: dict) -> str:
+    """The full 'Dear ...,' line for a family.
+
+    Priority: an explicit `salutation` override (use verbatim, e.g. add
+    'Uncle'/'Aunty' for elders) > a warm generic greeting for whole-household
+    rows named 'The X Family' (so no elder is addressed by bare first name) >
+    the first-name greeting for couples and individuals.
+    """
+    override = (row.get("salutation") or "").strip()
+    if override:
+        return f"Dear {esc(override)},"
+    m = re.match(r"^The (.+?) Family$", (row.get("display_name") or "").strip())
+    if m:
+        return f"Dearest {esc(m.group(1))} family,"
+    greeting = (row.get("greeting") or "").strip() or (row.get("display_name") or "").strip()
+    return f"Dear {esc(greeting)},"
+
 # ---------------------------------------------------------------- photos
 
 def process_photo(src: Path, dest_dir: Path, max_w: int = 1000):
@@ -245,6 +262,7 @@ def main():
 
         page = (template
             .replace("{{TITLE_NAME}}", esc(row["display_name"]))
+            .replace("{{SALUTATION}}", salutation_for(row))
             .replace("{{GREETING}}", esc(greeting))
             .replace("{{MESSAGE_HTML}}", paragraphs(message, esc(greeting)))
             .replace("{{NOTE_HTML}}", note_html)
@@ -294,6 +312,7 @@ def main():
     (SITE / "robots.txt").write_text("User-agent: *\nDisallow: /\n", encoding="utf-8")
     generic = (template
         .replace("{{TITLE_NAME}}", "Our Wonderful Guests")
+        .replace("{{SALUTATION}}", "Dear friends and family,")
         .replace("{{GREETING}}", "friends and family")
         .replace("{{MESSAGE_HTML}}", paragraphs(message, "friends and family"))
         .replace("{{NOTE_HTML}}", "")
