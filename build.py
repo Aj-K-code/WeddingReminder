@@ -139,6 +139,9 @@ def main():
     venue_name = cfg.get("venue_name") or ""
     venue_address = cfg.get("venue_address") or ""
     ics_location = ", ".join(p for p in (venue_name, venue_address) if p)
+    rec_name = cfg.get("reception_venue_name") or ""
+    rec_address = cfg.get("reception_venue_address") or ""
+    rec_location = ", ".join(p for p in (rec_name, rec_address) if p)
     if date_iso:
         from datetime import date, datetime, timedelta
         d0 = date.fromisoformat(date_iso)
@@ -147,24 +150,38 @@ def main():
         def ics_esc(s):
             return s.replace("\\", "\\\\").replace(",", "\\,").replace(";", "\\;")
 
-        loc_line = f"LOCATION:{ics_esc(ics_location)}\r\n" if ics_location else ""
-        start_t = cfg.get("ics_start_time") or ""
         tzid = cfg.get("ics_tzid") or "America/Chicago"
 
-        if start_t:
-            # timed event in the venue's local timezone (shows the same clock time everywhere)
+        def vevent(uid, start_t, end_t, summary, location, default_hours=1.5):
+            # timed event in the venue's local timezone (same clock time everywhere)
             sh, sm = (int(x) for x in start_t.split(":")[:2])
-            end_t = cfg.get("ics_end_time") or ""
+            dt_start = datetime(d0.year, d0.month, d0.day, sh, sm)
             if end_t:
                 eh, em = (int(x) for x in end_t.split(":")[:2])
                 dt_end = datetime(d0.year, d0.month, d0.day, eh, em)
             else:
-                dt_end = datetime(d0.year, d0.month, d0.day, sh, sm) + timedelta(hours=1, minutes=30)
-            dt_start = datetime(d0.year, d0.month, d0.day, sh, sm)
-            when = (
+                dt_end = dt_start + timedelta(hours=default_hours)
+            loc_line = f"LOCATION:{ics_esc(location)}\r\n" if location else ""
+            return (
+                "BEGIN:VEVENT\r\n"
+                f"UID:{uid}\r\n"
+                f"DTSTAMP:{d0.strftime('%Y%m%d')}T000000Z\r\n"
                 f"DTSTART;TZID={tzid}:{dt_start.strftime('%Y%m%dT%H%M%S')}\r\n"
                 f"DTEND;TZID={tzid}:{dt_end.strftime('%Y%m%dT%H%M%S')}\r\n"
-            )
+                f"SUMMARY:{ics_esc(summary)}\r\n"
+                + loc_line + "END:VEVENT\r\n")
+
+        events = []
+        if cfg.get("ics_start_time"):
+            events.append(vevent(f"wedding-{d0.strftime('%Y%m%d')}@thanks",
+                                 cfg["ics_start_time"], cfg.get("ics_end_time") or "",
+                                 ics_summary, ics_location))
+        if cfg.get("reception_ics_start"):
+            events.append(vevent(f"wedding-reception-{d0.strftime('%Y%m%d')}@thanks",
+                                 cfg["reception_ics_start"], cfg.get("reception_ics_end") or "",
+                                 f"{ics_summary} Reception", rec_location, default_hours=4))
+
+        if events:
             # US-rules VTIMEZONE — correct for America/Chicago and other US zones
             vtimezone = (
                 "BEGIN:VTIMEZONE\r\n"
@@ -175,24 +192,21 @@ def main():
                 "DTSTART:19701101T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU\r\nEND:STANDARD\r\n"
                 "END:VTIMEZONE\r\n"
             )
+            body = vtimezone + "".join(events)
         else:
-            when = (
+            body = (
+                "BEGIN:VEVENT\r\n"
+                f"UID:wedding-{d0.strftime('%Y%m%d')}@thanks\r\n"
+                f"DTSTAMP:{d0.strftime('%Y%m%d')}T000000Z\r\n"
                 f"DTSTART;VALUE=DATE:{d0.strftime('%Y%m%d')}\r\n"
                 f"DTEND;VALUE=DATE:{d1.strftime('%Y%m%d')}\r\n"
-            )
-            vtimezone = ""
+                f"SUMMARY:{ics_esc(ics_summary)}\r\n"
+                + (f"LOCATION:{ics_esc(ics_location)}\r\n" if ics_location else "")
+                + "END:VEVENT\r\n")
 
         (SITE / "wedding.ics").write_text(
             "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//wedding-thanks//EN\r\n"
-            "CALSCALE:GREGORIAN\r\n"
-            + vtimezone +
-            "BEGIN:VEVENT\r\n"
-            f"UID:wedding-{d0.strftime('%Y%m%d')}@thanks\r\n"
-            f"DTSTAMP:{d0.strftime('%Y%m%d')}T000000Z\r\n"
-            + when +
-            f"SUMMARY:{ics_esc(ics_summary)}\r\n"
-            + loc_line +
-            "END:VEVENT\r\nEND:VCALENDAR\r\n", encoding="utf-8")
+            "CALSCALE:GREGORIAN\r\n" + body + "END:VCALENDAR\r\n", encoding="utf-8")
 
     # hero monogram letters, from initials ("A·B" -> "A", "B") or couple names
     mono = [p for p in re.split(r"[^A-Za-z0-9]+", cfg.get("initials") or "") if p]
@@ -206,19 +220,22 @@ def main():
     og_cfg = cfg.get("og_photo") or ""
     og_pref = (photo_files.get(og_cfg) or photo_files.get(Path(og_cfg).stem)) if og_cfg else None
 
-    # venue block for the save-the-date card (shared across pages)
-    ceremony_time = cfg.get("ceremony_time") or ""
-    venue_bits = []
-    if ceremony_time:
-        venue_bits.append(f'      <p class="venue-time">{esc(ceremony_time)}</p>')
-    if venue_name:
-        venue_bits.append(f'      <p class="venue-name">{esc(venue_name)}</p>')
-    if venue_address:
-        maps_url = "https://maps.google.com/?q=" + quote(ics_location or venue_address)
-        venue_bits.append(
-            f'      <a class="venue-addr" href="{maps_url}" target="_blank" rel="noopener">'
-            f'{esc(venue_address)}</a>')
-    venue_html = ('    <div class="venue">\n' + "\n".join(venue_bits) + "\n    </div>\n") if venue_bits else ""
+    # venue blocks for the save-the-date card (shared across pages)
+    def venue_block(time_label, name, address):
+        bits = []
+        if time_label:
+            bits.append(f'      <p class="venue-time">{esc(time_label)}</p>')
+        if name:
+            bits.append(f'      <p class="venue-name">{esc(name)}</p>')
+        if address:
+            maps_url = "https://maps.google.com/?q=" + quote(", ".join(p for p in (name, address) if p))
+            bits.append(
+                f'      <a class="venue-addr" href="{maps_url}" target="_blank" rel="noopener">'
+                f'{esc(address)}</a>')
+        return ('    <div class="venue">\n' + "\n".join(bits) + "\n    </div>\n") if bits else ""
+
+    venue_html = (venue_block(cfg.get("ceremony_time") or "", venue_name, venue_address)
+                  + venue_block(cfg.get("reception_time") or "", rec_name, rec_address))
 
     for row in rows:
         slug = row["slug"]
