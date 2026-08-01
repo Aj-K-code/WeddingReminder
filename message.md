@@ -4,4 +4,4 @@ As a reminder, our wedding will be held on August 15, 2026, at Mar Thoma Sleeha 
 
 Just below, you will find the details — the ceremony time, the address with directions, and a button to add it all to your calendar.
 
-Thank you for being part of this celebration. We look forward to seeing you soon!
+We look forward to seeing you soon!

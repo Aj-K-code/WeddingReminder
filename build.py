@@ -202,6 +202,10 @@ def main():
     mono_l = mono[0] if mono else ""
     mono_r = mono[1] if len(mono) > 1 else ""
 
+    # link-preview photo (og:image), shared by every page
+    og_cfg = cfg.get("og_photo") or ""
+    og_pref = (photo_files.get(og_cfg) or photo_files.get(Path(og_cfg).stem)) if og_cfg else None
+
     # venue block for the save-the-date card (shared across pages)
     ceremony_time = cfg.get("ceremony_time") or ""
     venue_bits = []
@@ -259,7 +263,7 @@ def main():
             )
         else:
             photo_html = ""
-        photo_name = og_photo
+        photo_name = og_pref[0] if og_pref else og_photo
 
         note = row.get("note") or ""
         note_html = f'    <div class="note fade-up"><p>{esc(note)}</p></div>' if note else ""
@@ -338,7 +342,9 @@ def main():
         .replace("{{INITIALS}}", esc(cfg.get("initials") or ""))
         .replace("{{DATE_TEXT}}", esc(cfg.get("wedding_date") or ""))
         .replace("{{DATE_SHORT}}", esc(cfg.get("date_short") or cfg.get("wedding_date") or ""))
-        .replace("{{OG_IMAGE}}", "")
+        .replace("{{OG_IMAGE}}",
+                 f'<meta property="og:image" content="{site_url}/photos/{og_pref[0]}">'
+                 if site_url and og_pref else "")
         .replace("{{ROOT}}", "./"))
     (SITE / "index.html").write_text(generic, encoding="utf-8")
     (SITE / "404.html").write_text(generic, encoding="utf-8")
