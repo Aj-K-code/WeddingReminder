@@ -75,6 +75,14 @@ h1{
   margin-top:1.5rem;font-family:var(--serif-display);font-style:italic;font-weight:500;
   font-size:1.35rem;color:var(--ink-soft);letter-spacing:.04em;
 }
+.monogram{
+  margin-top:auto;padding-top:2.2rem;
+  display:flex;align-items:center;gap:.6rem;
+  font-family:var(--serif-display);font-style:italic;font-weight:600;
+  font-size:clamp(2.4rem,9vw,3.2rem);line-height:1;color:var(--gold);
+}
+.monogram span{display:inline-block}
+.monogram .mdot{font-size:.42em;color:var(--gold-soft)}
 .scroll-hint{
   margin-top:auto;padding:1.6rem 2.2rem;border:0;background:none;cursor:pointer;
   display:flex;flex-direction:column;align-items:center;gap:.55rem;
@@ -209,6 +217,13 @@ footer{text-align:center;padding:2.5rem 1.5rem 4.5rem;position:relative;z-index:
   .hero .a2{animation-delay:.45s}
   .hero .a3{animation-delay:.8s}
   .hero .a4{animation-delay:1.15s}
+  .hero .a5{animation-delay:1.4s}
+  /* the initials sway out of phase, like dance partners */
+  .monogram .m1{animation:dance 2.8s ease-in-out infinite}
+  .monogram .m2{animation:dance 2.8s ease-in-out infinite -1.4s}
+  .monogram .mdot{animation:dot-bob 2.8s ease-in-out infinite -.7s}
+  @keyframes dance{0%,100%{transform:rotate(-6deg) translateY(.05rem)}50%{transform:rotate(6deg) translateY(-.3rem)}}
+  @keyframes dot-bob{0%,100%{transform:translateY(.18rem)}50%{transform:translateY(-.3rem)}}
   @keyframes rise{to{opacity:1;transform:none}}
   .hero .a1 .line{transform:scaleX(0);animation:draw 1.6s cubic-bezier(.22,.61,.36,1) .5s forwards}
   @keyframes draw{to{transform:scaleX(1)}}
@@ -236,9 +251,12 @@ footer{text-align:center;padding:2.5rem 1.5rem 4.5rem;position:relative;z-index:
       <svg width="11" height="11" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M5 0l1.6 3.4L10 5 6.6 6.6 5 10 3.4 6.6 0 5l3.4-1.6z"/></svg>
       <span class="line"></span>
     </div>
-    <p class="eyebrow a a2">A note of thanks for</p>
+    <p class="eyebrow a a2">A note of love for</p>
     <h1 class="a a3">{{TITLE_NAME}}</h1>
     <p class="hero-date a a4">{{DATE_TEXT}}</p>
+    <div class="monogram a a5" aria-hidden="true">
+      <span class="m1">{{MONO_L}}</span><span class="mdot">·</span><span class="m2">{{MONO_R}}</span>
+    </div>
     <button class="scroll-hint" onclick="document.getElementById('letter').scrollIntoView({behavior:'smooth'})" aria-label="Scroll down to read our note">
       <span>scroll down</span>
       <svg width="26" height="14" viewBox="0 0 18 10" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M1 1l8 7 8-7"/></svg>
@@ -277,7 +295,7 @@ footer{text-align:center;padding:2.5rem 1.5rem 4.5rem;position:relative;z-index:
 <footer>
   <div class="seal fade-up">{{INITIALS}}</div>
   <p class="foot-names fade-up">{{COUPLE_CAPS}} · {{DATE_SHORT}}</p>
-  <p class="foot-love fade-up">thank you for being part of our story</p>
+  <p class="foot-love fade-up">our story is better with you in it</p>
 </footer>
 
 <script>
@@ -291,7 +309,7 @@ footer{text-align:center;padding:2.5rem 1.5rem 4.5rem;position:relative;z-index:
     if(k>1)t=k+' days to go';
     else if(k===1)t='Tomorrow!';
     else if(k===0)t='Today is the day!';
-    else t='Thank you for celebrating with us';
+    else t='What a joy it was to celebrate with you';
     cd.innerHTML='<span>'+t+'</span>';
   }
   // reveal on scroll

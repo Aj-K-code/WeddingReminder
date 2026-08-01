@@ -194,6 +194,14 @@ def main():
             + loc_line +
             "END:VEVENT\r\nEND:VCALENDAR\r\n", encoding="utf-8")
 
+    # hero monogram letters, from initials ("A·B" -> "A", "B") or couple names
+    mono = [p for p in re.split(r"[^A-Za-z0-9]+", cfg.get("initials") or "") if p]
+    if len(mono) < 2:
+        names = [w.strip() for w in (cfg.get("couple") or "").replace(" and ", " & ").split("&") if w.strip()]
+        mono = [n[:1] for n in names]
+    mono_l = mono[0] if mono else ""
+    mono_r = mono[1] if len(mono) > 1 else ""
+
     # venue block for the save-the-date card (shared across pages)
     ceremony_time = cfg.get("ceremony_time") or ""
     venue_bits = []
@@ -262,6 +270,8 @@ def main():
 
         page = (template
             .replace("{{TITLE_NAME}}", esc(row["display_name"]))
+            .replace("{{MONO_L}}", esc(mono_l))
+            .replace("{{MONO_R}}", esc(mono_r))
             .replace("{{SALUTATION}}", salutation_for(row))
             .replace("{{GREETING}}", esc(greeting))
             .replace("{{MESSAGE_HTML}}", paragraphs(message, esc(greeting)))
@@ -312,6 +322,8 @@ def main():
     (SITE / "robots.txt").write_text("User-agent: *\nDisallow: /\n", encoding="utf-8")
     generic = (template
         .replace("{{TITLE_NAME}}", "Our Wonderful Guests")
+        .replace("{{MONO_L}}", esc(mono_l))
+        .replace("{{MONO_R}}", esc(mono_r))
         .replace("{{SALUTATION}}", "Dear friends and family,")
         .replace("{{GREETING}}", "friends and family")
         .replace("{{MESSAGE_HTML}}", paragraphs(message, "friends and family"))
