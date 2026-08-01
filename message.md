@@ -1,5 +1,7 @@
-We are getting married! And as the big day gets closer, we keep thinking about the people who got us here. You are right at the top of that list.
+We are so excited to celebrate our wedding with you soon!
 
-We are so grateful for the love you have shown us, on our own and together. The calls, the celebrations, the advice, and all the ordinary days you made better just by being in them.
+As a reminder, our wedding will be held on August 15, 2026, at Mar Thoma Sleeha Cathedral in Bellwood, Illinois. We are looking forward to having you join us on this special day as we celebrate our marriage with our family, friends, and community.
 
-We cannot wait to hug you, share a meal, and dance the night away together. It would not be the same without you. Truly.
+Just below, you will find the details — the ceremony time, the address with directions, and a button to add it all to your calendar.
+
+Thank you for being part of this celebration. We look forward to seeing you soon!
